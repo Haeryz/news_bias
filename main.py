@@ -174,6 +174,9 @@ def scrape_outlet(outlet_key, event=None, api_key=None, debug=False):
             elif outlet_key == "bbc":
                 # Special case for BBC to pass debug flag and ignore date
                 articles = scrape_func(evt, debug=debug, ignore_date=True)
+            elif outlet_key == "jacobin":
+                # Special case for Jacobin to pass debug flag
+                articles = scrape_func(evt, debug=debug, ignore_date=True)
             else:
                 articles = scrape_func(evt)
                 
@@ -186,9 +189,9 @@ def scrape_outlet(outlet_key, event=None, api_key=None, debug=False):
         except Exception as e:
             print(f"Error scraping {outlet_name} for {evt['name']}: {e}")
     
-    # Check if we need to run fallback scraping for BBC or AP
+    # Check if we need to run fallback scraping for BBC, AP, or Jacobin
     target_count = 2000
-    if (outlet_key == "ap" or outlet_key == "bbc") and len(all_articles) < target_count:
+    if outlet_key in ["ap", "bbc", "jacobin"] and len(all_articles) < target_count:
         needed_articles = target_count - len(all_articles)
         print(f"{outlet_name} has only {len(all_articles)} articles. Running fallback scraping for {needed_articles} more...")
         
@@ -205,8 +208,8 @@ def scrape_outlet(outlet_key, event=None, api_key=None, debug=False):
             if outlet_key == "ap":
                 # Call AP scraper in fallback mode
                 fallback_articles = scrape_ap(fallback_event, fallback_mode=True, limit=needed_articles)
-            else:  # BBC
-                # Create a list of general topics to try
+            elif outlet_key == "bbc":
+                # Create a list of general topics to try for BBC
                 general_topics = [
                     "politics", "economy", "health", "science", "technology", 
                     "business", "entertainment", "sports", "world", "education"
@@ -236,6 +239,15 @@ def scrape_outlet(outlet_key, event=None, api_key=None, debug=False):
                     
                     # Brief pause between topics
                     time.sleep(2)
+            elif outlet_key == "jacobin":
+                # Call Jacobin scraper in fallback mode
+                fallback_articles = scrape_jacobin(
+                    fallback_event, 
+                    debug=debug,
+                    ignore_date=True, 
+                    fallback_mode=True,
+                    limit=needed_articles
+                )
             
             print(f"Fallback scraping collected {len(fallback_articles)} additional {outlet_name} articles")
             

@@ -2,3 +2,5 @@
 /virtual
 .env
 /data
+/scrap/__pycache__
+notebooks\results
