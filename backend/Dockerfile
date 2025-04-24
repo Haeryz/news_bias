@@ -1,6 +1,9 @@
 # backend/Dockerfile
 FROM python:3.9-slim
 
+# Disable GPU usage to suppress CUDA warnings
+ENV CUDA_VISIBLE_DEVICES=""
+
 # Set working directory
 WORKDIR /app
 
