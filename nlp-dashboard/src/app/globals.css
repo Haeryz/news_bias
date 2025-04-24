@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply transition-colors duration-300;
+}
+
+textarea, button {
+  @apply focus:outline-none;
+}
