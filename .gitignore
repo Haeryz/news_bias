@@ -4,3 +4,4 @@
 /data
 /scrap/__pycache__
 notebooks\results
+backend\bias_classification_model/*.h5
