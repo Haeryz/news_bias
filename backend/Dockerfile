@@ -12,19 +12,28 @@ COPY requirements.txt .
 # Install dependencies without caching to reduce image size
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install gdown for Google Drive downloads
+# Install gdown for Google Drive downloads (for bias model)
 RUN pip install gdown
 
-# Create model directory and download tf_model.h5 from Google Drive
+# --- Bias Model Handling ---
+# Create bias model directory
 RUN mkdir -p bias_classification_model
+# Download tf_model.h5 from Google Drive into the bias model directory
 RUN gdown --id 1b8xl5sWVx6SKWtujo957m73XgZgiMI0f -O bias_classification_model/tf_model.h5
-
-# Copy FastAPI app and model configs (excluding tf_model.h5)
-COPY main.py .
+# Copy bias model config files (vocab, json configs)
 COPY bias_classification_model/ ./bias_classification_model/
 
-# Expose port 80 for Azure Container Apps
+# --- Wine Model Handling ---
+# Copy the wine quality model file directly from the build context
+COPY wine_quality_tf_model.weights.h5 .
+
+# --- Application Code ---
+# Copy the main FastAPI application file
+COPY main.py .
+
+# --- Runtime Configuration ---
+# Expose port 80 for Azure Container Apps (or other deployment targets)
 EXPOSE 80
 
-# Run FastAPI with Uvicorn
+# Run FastAPI with Uvicorn on port 80
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
