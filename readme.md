@@ -17,3 +17,9 @@
 pip install -r requrements.txt
 ```
 2. python main.py (scrap semua outlet), python main.py --source bbc --debug (scrap semua events pada satu outlet), python main.py --source bbc --event 0 --debug (test 1 event pada 1 outlet)
+
+# Run command
+Powershell
+```
+cd backend; uvicorn main:app --host 0.0.0.0 --port 8000
+```
