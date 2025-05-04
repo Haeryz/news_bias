@@ -6,10 +6,15 @@ import numpy as np
 import tensorflow as tf
 import keras # Import Keras separately
 from keras import layers # Import layers from Keras
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from transformers import DistilBertTokenizer, TFDistilBertForSequenceClassification
+from PDF_parser import create_pdf_parser  # Import the PDF parser
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # --- App Initialization ---
 app = FastAPI(
@@ -26,6 +31,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Initialize PDF Parser ---
+try:
+    pdf_parser = create_pdf_parser()
+    print("✅ PDF parser initialized successfully!")
+except Exception as e:
+    print(f"❌ Failed to initialize PDF parser: {e}")
+    pdf_parser = None
 
 # --- News Bias Classification Model Loading ---
 BIAS_MODEL_DIR = "bias_classification_model"
@@ -147,6 +160,47 @@ async def predict_wine_quality(features: WineFeaturesInput):
     except Exception as e:
         print(f"❌ Error during wine prediction: {e}")
         raise HTTPException(status_code=500, detail=f"Wine quality prediction failed: {str(e)}")
+
+@app.post("/upload_pdf", tags=["PDF Processing"])
+async def upload_pdf(file: UploadFile = File(...)):
+    """
+    Upload a PDF file for processing through Azure Document Intelligence API.
+    The API will extract the text and optionally classify it for bias.
+    """
+    if not pdf_parser:
+        raise HTTPException(status_code=503, detail="PDF parser is not available.")
+    
+    # Check if file is a PDF
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+        
+    try:
+        # Process the PDF using Azure Document Intelligence
+        extracted_content = await pdf_parser.process_pdf(file)
+        
+        # Optionally classify the extracted text for news bias
+        bias_result = None
+        if bias_model and bias_tokenizer and extracted_content:
+            cleaned_text = clean_text(extracted_content)
+            inputs = bias_tokenizer(cleaned_text, return_tensors="tf", padding="max_length", truncation=True, max_length=512)
+            outputs = bias_model(inputs)
+            bias_result = int(tf.argmax(outputs.logits, axis=1).numpy()[0])
+            
+        response = {
+            "content": extracted_content,
+        }
+        
+        if bias_result is not None:
+            response["bias_label"] = bias_result
+            
+        return response
+        
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"❌ Error during PDF processing: {e}")
+        raise HTTPException(status_code=500, detail=f"PDF processing failed: {str(e)}")
 
 # --- Main block (for local Uvicorn execution) ---
 if __name__ == "__main__":
