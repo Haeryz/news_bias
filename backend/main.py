@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from transformers import DistilBertTokenizer, TFDistilBertForSequenceClassification
 from PDF_parser import create_pdf_parser  # Import the PDF parser
+from sentiment import create_language_service  # Import the language service
 from dotenv import load_dotenv  # Import for loading environment variables
 
 # Load environment variables from .env file
@@ -32,13 +33,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Initialize PDF Parser ---
+# --- Initialize PDF Parser and Language Service ---
 try:
     pdf_parser = create_pdf_parser()
     print("✅ PDF parser initialized successfully!")
 except Exception as e:
     print(f"❌ Failed to initialize PDF parser: {e}")
     pdf_parser = None
+
+try:
+    language_service = create_language_service()
+    print("✅ Azure Language service initialized successfully!")
+except Exception as e:
+    print(f"❌ Failed to initialize Azure Language service: {e}")
+    language_service = None
 
 # --- News Bias Classification Model Loading ---
 BIAS_MODEL_DIR = "bias_classification_model"
@@ -104,10 +112,10 @@ except Exception as e:
 
 # --- Define bias label meanings dictionary ---
 BIAS_LABEL_MEANINGS = {
-    0: "Left-leaning",
-    1: "Center",
-    2: "Right-leaning",
-    3: "Extreme"  # Adjust these meanings based on your actual labels
+    0: "Republican",
+    1: "Liberal",
+    2: "Neutral",
+    3: "Other"  # Adjust these meanings based on your actual labels
 }
 
 # --- Helper Functions (clean_text) ---
@@ -215,13 +223,38 @@ async def classify_news_text(input: NewsTextInput):
             f"label_{i}": float(round(prob * 100, 2)) for i, prob in enumerate(probabilities)
         }
         
-        return {
+        # Create response dict with bias classification results
+        response = {
             "label": predicted_label,
             "label_meaning": BIAS_LABEL_MEANINGS.get(predicted_label, "Unknown"),
             "confidence": float(round(probabilities[predicted_label] * 100, 2)),
             "confidence_scores": confidence_scores,
             "bias_score": bias_score
         }
+        
+        # Add sentiment analysis if language service is available
+        if language_service:
+            try:
+                # Run Azure Language analysis on the text
+                language_analysis = language_service.analyze_text(input.text)
+                
+                # Add sentiment results to response
+                response["sentiment"] = language_analysis.get("sentiment", {})
+                
+                # Add highlighted phrases (biased/emotionally charged language)
+                highlighted_phrases = language_analysis.get("highlighted_phrases", [])
+                response["highlighted_phrases"] = highlighted_phrases
+                
+                # Only include key phrases if there are some
+                if language_analysis.get("key_phrases"):
+                    response["key_phrases"] = language_analysis.get("key_phrases", [])
+                    
+            except Exception as e:
+                print(f"❌ Azure Language analysis failed, but continuing with bias analysis: {e}")
+                # Don't fail the entire request if just the sentiment analysis fails
+                response["sentiment_analysis_error"] = str(e)
+        
+        return response
     except Exception as e:
         print(f"❌ Error during news classification: {e}")
         raise HTTPException(status_code=500, detail=f"News classification prediction failed: {str(e)}")
@@ -292,6 +325,28 @@ async def upload_pdf(file: UploadFile = File(...)):
             response["confidence"] = float(round(probabilities[predicted_label] * 100, 2))
             response["confidence_scores"] = confidence_scores
             response["bias_score"] = bias_score
+            
+        # Add sentiment analysis if language service is available
+        if language_service and extracted_content:
+            try:
+                # Run Azure Language analysis on the extracted text
+                language_analysis = language_service.analyze_text(extracted_content)
+                
+                # Add sentiment results to response
+                response["sentiment"] = language_analysis.get("sentiment", {})
+                
+                # Add highlighted phrases (biased/emotionally charged language)
+                highlighted_phrases = language_analysis.get("highlighted_phrases", [])
+                response["highlighted_phrases"] = highlighted_phrases
+                
+                # Only include key phrases if there are some
+                if language_analysis.get("key_phrases"):
+                    response["key_phrases"] = language_analysis.get("key_phrases", [])
+                    
+            except Exception as e:
+                print(f"❌ Azure Language analysis failed, but continuing with bias analysis: {e}")
+                # Don't fail the entire request if just the sentiment analysis fails
+                response["sentiment_analysis_error"] = str(e)
             
         return response
         
