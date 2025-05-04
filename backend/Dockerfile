@@ -28,8 +28,8 @@ COPY bias_classification_model/ ./bias_classification_model/
 COPY wine_quality_tf_model.weights.h5 .
 
 # --- Application Code ---
-# Copy the main FastAPI application file
-COPY main.py .
+# Copy all the Python application files
+COPY main.py PDF_parser.py sentiment.py ./
 
 # --- Runtime Configuration ---
 # Expose port 80 for Azure Container Apps (or other deployment targets)
