@@ -1,4 +1,9 @@
-export const classifyTextProxy = async (text: string): Promise<any> => {
+interface ClassifierApiResponse {
+  label: number;
+  confidence: number;
+}
+
+export const classifyTextProxy = async (text: string): Promise<ClassifierApiResponse> => {
     try {
       const response = await fetch('/api/classify', {
         method: 'POST',
