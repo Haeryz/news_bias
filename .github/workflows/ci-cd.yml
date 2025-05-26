@@ -32,6 +32,17 @@ jobs:
             bash -c "ls -lh bias_classification_model/tf_model.h5"
         continue-on-error: true  # Optional: For debugging
 
+      # --- ADD THIS DEBUG STEP ---
+      - name: Verify Docker Hub Secrets
+        run: |
+          echo "DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}"
+          echo "DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}"
+        # If you run this, in the logs for this step, you should see:
+        # DOCKERHUB_USERNAME: ***
+        # DOCKERHUB_TOKEN: ***
+        # If you see nothing after the colon, the secret is empty.
+      # ---------------------------
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
