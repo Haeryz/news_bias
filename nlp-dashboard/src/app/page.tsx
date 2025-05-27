@@ -8,14 +8,27 @@ export default function Home() {
   const [result, setResult] = useState<ClassificationResult | null>(null);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-lg space-y-6">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-white">Republic vs Democrat Classification</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-2">
+            News Bias Classification
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            Analyze political bias, sentiment, and key phrases in news articles
+          </p>
         </div>
-        <div className="flex flex-col items-center space-y-6">
-          <ClassificationForm onResult={setResult} />
-          <ResultDisplay result={result} />
+        
+        <div className="flex flex-col items-center space-y-8">
+          <div className="w-full max-w-2xl">
+            <ClassificationForm onResult={setResult} />
+          </div>
+          
+          {result && (
+            <div className="w-full">
+              <ResultDisplay result={result} />
+            </div>
+          )}
         </div>
       </div>
     </div>
