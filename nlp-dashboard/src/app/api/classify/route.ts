@@ -3,15 +3,27 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { text } = await request.json();
+    const { text, includeLime = false, fastMode = true, numFeatures = 5 } = await request.json();
+      // Choose endpoint based on LIME preference
+    const endpoint = includeLime ? '/classify_with_explanation' : '/classify';
+    const baseUrl = 'http://localhost:8000';
     
-    // Fixed: Added /classify endpoint to the URL
-    const response = await fetch('https://brrbrrpatapim-dm.icystone-73750e36.southeastasia.azurecontainerapps.io/classify', {
+    // Prepare request body
+    const requestBody: Record<string, unknown> = { text };
+    if (includeLime) {
+      requestBody.include_explanation = true;
+      requestBody.fast_mode = fastMode;
+      requestBody.num_features = numFeatures;
+    }
+    
+    console.log(`Using endpoint: ${endpoint}, LIME: ${includeLime}`);
+    
+    const response = await fetch(`${baseUrl}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(requestBody),
     });
     
     if (!response.ok) {

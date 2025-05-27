@@ -1,13 +1,29 @@
 import { ClassificationResult } from '@/types';
 
-export const classifyTextProxy = async (text: string): Promise<ClassificationResult> => {
+export interface ClassifyOptions {
+  includeLime?: boolean;
+  fastMode?: boolean;
+  numFeatures?: number;
+}
+
+export const classifyTextProxy = async (
+  text: string, 
+  options: ClassifyOptions = {}
+): Promise<ClassificationResult> => {
     try {
+      const { includeLime = false, fastMode = true, numFeatures = 5 } = options;
+      
       const response = await fetch('/api/classify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ 
+          text, 
+          includeLime, 
+          fastMode, 
+          numFeatures 
+        }),
       });
   
       if (!response.ok) {
