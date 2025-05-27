@@ -325,9 +325,8 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
                   <div className="text-xs text-gray-500 dark:text-gray-400">
                     Confidence: {(phrase.confidence_scores.negative * 100).toFixed(1)}%
                   </div>
-                </div>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 italic">
-                  "{phrase.phrase}"
+                </div>                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 italic">
+                  &ldquo;{phrase.phrase}&rdquo;
                 </p>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   {phrase.explanation}
