@@ -1,9 +1,6 @@
-interface ClassifierApiResponse {
-  label: number;
-  confidence: number;
-}
+import { ClassificationResult } from '@/types';
 
-export const classifyTextProxy = async (text: string): Promise<ClassifierApiResponse> => {
+export const classifyTextProxy = async (text: string): Promise<ClassificationResult> => {
     try {
       const response = await fetch('/api/classify', {
         method: 'POST',
