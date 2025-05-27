@@ -212,8 +212,7 @@ class NewsTextInput(BaseModel):
 class ExplainableNewsInput(BaseModel):
     text: str = Field(..., min_length=1, max_length=10000, description="The news article text to classify and explain.")
     include_explanation: bool = Field(default=True, description="Whether to include LIME explanation.")
-    num_features: int = Field(default=5, ge=3, le=15, description="Number of features to analyze (3-15, lower is faster).")
-    fast_mode: bool = Field(default=True, description="Use fast mode for quicker responses (recommended for web apps).")
+    num_features: int = Field(default=10, ge=5, le=20, description="Number of features to analyze (5-20).")
 
 class WineFeaturesInput(BaseModel):
     fixed_acidity: float
@@ -279,7 +278,7 @@ async def classify_news_text(input: NewsTextInput):
                 # Only include key phrases if there are some
                 if language_analysis.get("key_phrases"):
                     response["key_phrases"] = language_analysis.get("key_phrases", [])
-            except Exception as e:
+                      except Exception as e:
                 print(f"❌ Azure Language analysis failed, but continuing with bias analysis: {e}")
                 # Don't fail the entire request if just the sentiment analysis fails
                 response["sentiment_analysis_error"] = str(e)
@@ -325,13 +324,14 @@ async def classify_with_explanation(input: ExplainableNewsInput):
             "confidence": float(round(probabilities[predicted_label] * 100, 2)),
             "confidence_scores": confidence_scores,
             "bias_score": bias_score
-        }          # Add LIME explanation if requested and available
+        }
+        
+        # Add LIME explanation if requested and available
         if input.include_explanation and bias_explainer:
             try:
                 explanation_result = bias_explainer.explain_prediction(
                     input.text, 
-                    num_features=input.num_features,
-                    num_samples=30  # Much lower for speed
+                    num_features=input.num_features
                 )
                 response["explanation"] = explanation_result
                 response["has_explanation"] = True
