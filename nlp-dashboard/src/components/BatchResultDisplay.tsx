@@ -11,6 +11,7 @@ interface BatchResultDisplayProps {
 export default function BatchResultDisplay({ result, onClear }: BatchResultDisplayProps) {
   const [showAllResults, setShowAllResults] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'summary' | 'results' | 'evaluation'>('summary');
+  const [viewingArticle, setViewingArticle] = useState<null | { content: string; predicted: string; expected?: string }>(null);
 
   const displayResults = showAllResults ? result.results : result.results.slice(0, 10);
   const hasEvaluation = result.evaluation !== undefined;
@@ -76,6 +77,26 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
         {/* Summary Tab */}
         {selectedTab === 'summary' && (
           <div className="space-y-6">
+            {/* Prediction Accuracy Summary */}
+            {hasEvaluation && (
+              <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 border-l-4 border-blue-500 dark:border-blue-400 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div className="text-lg text-gray-800 dark:text-gray-200 mb-4 md:mb-0">
+                    <span className="font-bold">Prediction Accuracy: </span>
+                    <span className="text-green-600 dark:text-green-400 font-semibold">{Math.round((result.evaluation!.correct_predictions / result.evaluation!.total_samples) * 100)}% correct</span>
+                    <span className="mx-2 text-gray-400">|</span>
+                    <span className="text-red-600 dark:text-red-400 font-semibold">{Math.round((result.evaluation!.incorrect_predictions / result.evaluation!.total_samples) * 100)}% incorrect</span>
+                  </div>
+                  <div className="w-full md:w-1/3 bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full"
+                      style={{ width: `${(result.evaluation!.correct_predictions / result.evaluation!.total_samples) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Key Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
@@ -232,8 +253,20 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
                     <tr key={index} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="p-2 text-gray-600 dark:text-gray-400">{index + 1}</td>
                       <td className="p-2 max-w-xs">
-                        <div className="truncate text-gray-800 dark:text-gray-200" title={item.content}>
-                          {item.content.length > 100 ? `${item.content.substring(0, 100)}...` : item.content}
+                        <div className="flex flex-col">
+                          <div className="truncate text-gray-800 dark:text-gray-200" title={item.content}>
+                            {item.content.length > 100 ? `${item.content.substring(0, 100)}...` : item.content}
+                          </div>
+                          <button 
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mt-1"
+                            onClick={() => setViewingArticle({
+                              content: item.content,
+                              predicted: item.predicted_meaning,
+                              expected: item.expected_meaning
+                            })}
+                          >
+                            View full article
+                          </button>
                         </div>
                       </td>
                       {hasEvaluation && (
@@ -414,6 +447,54 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
           </div>
         )}
       </div>
+      
+      {/* Article Detail Modal */}
+      {viewingArticle && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setViewingArticle(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                Article Detail
+              </h3>
+              <button 
+                onClick={() => setViewingArticle(null)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-grow">
+              <div className="mb-6">
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm">
+                    Predicted: {viewingArticle.predicted}
+                  </div>
+                  {viewingArticle.expected && (
+                    <div className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm">
+                      Expected: {viewingArticle.expected}
+                    </div>
+                  )}
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200">{viewingArticle.content}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end">
+              <button
+                onClick={() => setViewingArticle(null)}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AnimatedContainer>
   );
 }
