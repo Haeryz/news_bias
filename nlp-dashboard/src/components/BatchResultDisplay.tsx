@@ -94,7 +94,12 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
                 <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {result.failed_predictions}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-300">Failed</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Processing Failures
+                  <span className="block text-xs italic mt-1">
+                    (Incorrect predictions: {hasEvaluation ? result.evaluation!.incorrect_predictions : 'N/A'})
+                  </span>
+                </div>
               </div>
               {hasEvaluation && (
                 <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
