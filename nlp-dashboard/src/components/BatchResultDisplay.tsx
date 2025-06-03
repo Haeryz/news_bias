@@ -365,11 +365,15 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
                         <th className="p-2 text-right text-xs text-gray-600 dark:text-gray-400">
                           {result.evaluation!.confusion_matrix.labels[i]}
                         </th>
-                        {row.map((cell, j) => (
+                        {Array.isArray(row) ? row.map((cell, j) => (
                           <td key={j} className={`p-2 text-center ${i === j ? 'bg-green-100 dark:bg-green-900/30 font-semibold' : 'bg-white dark:bg-gray-600'}`}>
                             {cell}
                           </td>
-                        ))}
+                        )) : (
+                          <td className="p-2 text-center">
+                            {row}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -387,7 +391,7 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
                   {result.evaluation!.incorrect_examples.slice(0, 5).map((item, index) => (
                     <div key={index} className="text-sm p-2 bg-white dark:bg-gray-700 rounded border border-red-200 dark:border-red-800">
                       <div className="text-gray-800 dark:text-gray-200 mb-1">
-                        "{item.content.length > 150 ? `${item.content.substring(0, 150)}...` : item.content}"
+                        &ldquo;{item.content.length > 150 ? `${item.content.substring(0, 150)}...` : item.content}&rdquo;
                       </div>
                       <div className="flex space-x-4 text-xs">
                         <span className="text-green-600 dark:text-green-400">
