@@ -253,20 +253,25 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
                     <tr key={index} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="p-2 text-gray-600 dark:text-gray-400">{index + 1}</td>
                       <td className="p-2 max-w-xs">
-                        <div className="flex flex-col">
-                          <div className="truncate text-gray-800 dark:text-gray-200" title={item.content}>
-                            {item.content.length > 100 ? `${item.content.substring(0, 100)}...` : item.content}
+                        <div className="flex flex-col">                          <div className="flex items-center gap-2">
+                            <div className="truncate text-gray-800 dark:text-gray-200 flex-1" title={item.content}>
+                              {item.content.length > 100 ? `${item.content.substring(0, 100)}...` : item.content}
+                            </div>
+                            <button 
+                              className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                              onClick={() => setViewingArticle({
+                                content: item.content,
+                                predicted: item.predicted_meaning,
+                                expected: item.expected_meaning
+                              })}
+                              title="View full article"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
                           </div>
-                          <button 
-                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mt-1"
-                            onClick={() => setViewingArticle({
-                              content: item.content,
-                              predicted: item.predicted_meaning,
-                              expected: item.expected_meaning
-                            })}
-                          >
-                            View full article
-                          </button>
                         </div>
                       </td>
                       {hasEvaluation && (
@@ -426,10 +431,25 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
                   Sample Incorrect Predictions ({result.evaluation!.incorrect_examples.length} total)
                 </h3>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {result.evaluation!.incorrect_examples.slice(0, 5).map((item, index) => (
-                    <div key={index} className="text-sm p-2 bg-white dark:bg-gray-700 rounded border border-red-200 dark:border-red-800">
-                      <div className="text-gray-800 dark:text-gray-200 mb-1">
-                        &ldquo;{item.content.length > 150 ? `${item.content.substring(0, 150)}...` : item.content}&rdquo;
+                  {result.evaluation!.incorrect_examples.slice(0, 5).map((item, index) => (                    <div key={index} className="text-sm p-2 bg-white dark:bg-gray-700 rounded border border-red-200 dark:border-red-800">
+                      <div className="flex justify-between items-start gap-2 mb-1">
+                        <div className="text-gray-800 dark:text-gray-200">
+                          &ldquo;{item.content.length > 150 ? `${item.content.substring(0, 150)}...` : item.content}&rdquo;
+                        </div>
+                        <button 
+                          className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex-shrink-0"
+                          onClick={() => setViewingArticle({
+                            content: item.content,
+                            predicted: item.predicted_meaning,
+                            expected: item.expected_meaning
+                          })}
+                          title="View full article"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
                       </div>
                       <div className="flex space-x-4 text-xs">
                         <span className="text-green-600 dark:text-green-400">
@@ -450,25 +470,17 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
       
       {/* Article Detail Modal */}
       {viewingArticle && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setViewingArticle(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 overflow-auto py-8" onClick={() => setViewingArticle(null)}>
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl mx-auto my-0 w-full max-w-4xl flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                Article Detail
+                Article Content
               </h3>
-              <button 
-                onClick={() => setViewingArticle(null)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-grow">
-              <div className="mb-6">
-                <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex items-center gap-4">
+                <div className="flex flex-wrap gap-2">
                   <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm">
                     Predicted: {viewingArticle.predicted}
                   </div>
@@ -478,13 +490,25 @@ export default function BatchResultDisplay({ result, onClear }: BatchResultDispl
                     </div>
                   )}
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                  <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200">{viewingArticle.content}</p>
-                </div>
+                <button 
+                  onClick={() => setViewingArticle(null)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
             
-            <div className="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end">
+            <div className="p-6 overflow-y-auto">
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 md:p-6 rounded-lg border border-gray-200 dark:border-gray-600">
+                <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-base leading-relaxed">{viewingArticle.content}</p>
+              </div>
+            </div>
+            
+            <div className="sticky bottom-0 z-10 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end">
               <button
                 onClick={() => setViewingArticle(null)}
                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
